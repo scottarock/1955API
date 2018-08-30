@@ -5,6 +5,7 @@ const express = require('express'),
       { Schema } = mongoose,
       app = express();
 
+// set up mongoose and connect
 mongoose.Promise = global.Promise;
 mongoose.connect(
   'mongodb://localhost:27017/1955api',
@@ -12,8 +13,10 @@ mongoose.connect(
 );
 mongoose.connection.on('connect', () => console.log('Mongo DB connected'));
 
+// set up server
 app.use(parser.json());
 
+// schema for the data
 const fiftyFiveSchema = new Schema({
   name: {
     type: String,
@@ -25,9 +28,32 @@ const fiftyFiveSchema = new Schema({
   },
 }, { timestamps: true });
 
-app.get('/', function(request, response) {
+// register the schema
+const FiftyFive = mongoose.model('FiftyFive', fiftyFiveSchema);
 
+// using all get routes so we can just use the browser address line
+app.get('/', function(request, response) {
+  FiftyFive.find({})
+    .then(data => response.json(data))
+    .catch(console.log);
 });
 
+app.get('/new/:name', function(request, response) {
+  FiftyFive.create({ name: request.params.name })
+    .then(newName => response.redirect('/'))
+    .catch(console.log);
+});
+
+app.get('/remove/:name', function(request, response) {
+  FiftyFive.findOneAndDelete({ name: request.params.name })
+    .then(data => response.redirect('/'))
+    .catch(console.log);
+});
+
+app.get('/:name', function(request, response) {
+  FiftyFive.find({ name: request.params.name })
+    .then(data => response.json(data))
+    .catch(console.log);
+});
 
 app.listen(port, () => console.log(`1955 api listening on port ${port}`));
